@@ -1,6 +1,8 @@
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { ROCNIKY, diela, menoAutora } from '../data'
+import { ROCNIKY, nacitajVsetkyDiela, najdiPrehlad } from '../data'
+import { useAsync } from '../hooks/useAsync'
+import { ChybaNacitania, Nacitavanie } from '../components/Nacitavanie'
 import type { Rocnik, Uloha, UlohaTyp } from '../types'
 import { premiesaj } from '../lib/shuffle'
 import { UlohyPanel } from '../components/ulohy/UlohyPanel'
@@ -27,14 +29,21 @@ export function Precvicovanie() {
   /** zvýšenie spustí nový beh s novým náhodným výberom */
   const [beh, setBeh] = useState(0)
 
+  // Plné dáta sa sťahujú až tu — úvodný bundle ich neobsahuje.
+  const vyber = rocniky.length === 0 ? ROCNIKY : rocniky
+  const { data: plneDiela, nacitava, chyba } = useAsync(
+    () => nacitajVsetkyDiela(vyber),
+    [vyber.join(',')],
+  )
+
   const zasoba = useMemo<UlohaSDielom[]>(() => {
-    const vybrane = diela.filter((d) => rocniky.length === 0 || rocniky.includes(d.rocnik))
-    return vybrane.flatMap((dielo) =>
+    if (!plneDiela) return []
+    return plneDiela.flatMap((dielo) =>
       dielo.ulohy
         .filter((u) => typy.length === 0 || typy.includes(u.typ))
         .map((uloha) => ({ uloha, dieloId: dielo.id, dieloNazov: dielo.nazov })),
     )
-  }, [rocniky, typy])
+  }, [plneDiela, typy])
 
   const test = useMemo(
     () => premiesaj(zasoba).slice(0, pocet),
@@ -137,7 +146,11 @@ export function Precvicovanie() {
       </div>
 
       <div className="mt-8">
-        {test.length === 0 ? (
+        {nacitava ? (
+          <Nacitavanie popis="Pripravujem úlohy…" />
+        ) : chyba ? (
+          <ChybaNacitania />
+        ) : test.length === 0 ? (
           <p className="rounded-xl border border-dashed border-stone-300 p-10 text-center text-sm text-stone-500 dark:border-stone-700 dark:text-stone-400">
             Pre zvolenú kombináciu nie sú žiadne úlohy.
           </p>
@@ -146,13 +159,14 @@ export function Precvicovanie() {
             <div className="mb-4 flex flex-wrap gap-x-3 gap-y-1 text-xs text-stone-400 dark:text-stone-500">
               <span>Diela v teste:</span>
               {[...new Set(test.map((t) => t.dieloId))].map((dieloId) => {
-                const dielo = diela.find((d) => d.id === dieloId)!
+                const dielo = najdiPrehlad(dieloId)
+                if (!dielo) return null
                 return (
                   <Link
                     key={dieloId}
                     to={`/dielo/${dieloId}`}
                     className="underline underline-offset-2 hover:text-amber-700 dark:hover:text-amber-400"
-                    title={menoAutora(dielo)}
+                    title={dielo.autor}
                   >
                     {dielo.nazov}
                   </Link>

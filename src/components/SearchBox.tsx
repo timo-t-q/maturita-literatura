@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { hladaj } from '../lib/search'
-import { menoAutora } from '../data'
+
 
 /** Vyhľadávanie s rozbaľovacím zoznamom výsledkov a klávesovou obsluhou. */
 export function SearchBox() {
@@ -107,7 +107,7 @@ export function SearchBox() {
                     {dielo.nazov}
                   </span>
                   <span className="block text-xs text-stone-500 dark:text-stone-400">
-                    {menoAutora(dielo)} · {dielo.rocnik}. ročník
+                    {dielo.autor} · {dielo.rocnik}. ročník
                   </span>
                 </button>
               </li>

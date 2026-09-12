@@ -29,6 +29,14 @@ jobs:
 
       - run: npm ci
 
+      - name: Kontrola aktuálnosti generovaného indexu
+        run: |
+          npm run generate:index
+          if ! git diff --quiet src/data/prehlad.generated.ts src/data/autori.generated.ts; then
+            echo "::error::Generovaný index nie je aktuálny — spusti npm run generate:index"
+            exit 1
+          fi
+
       - name: Kontrola typov
         run: npx tsc -b
 

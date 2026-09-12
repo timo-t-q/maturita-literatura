@@ -1,34 +1,73 @@
+/**
+ * Verejné rozhranie k dátam.
+ *
+ * Odľahčený prehľad diel a zoznam autorov sú v bundli hneď — potrebuje ich
+ * úvodná stránka, prehľad, bočný panel aj vyhľadávanie. Plné dáta o diele
+ * (dej, postavy, jazykové prostriedky, cvičenia) sa načítajú až na vyžiadanie
+ * cez `nacitajDielo` / `nacitajRocnik`, ktoré dynamicky importujú príslušný
+ * ročník. Vďaka tomu úvodný bundle nerastie s každým pridaným dielom.
+ */
 import type { Autor, Dielo, Druh, Literatura, Rocnik } from '../types'
-import { autori1, diela1 } from './works/rocnik1'
-import { autori2, diela2 } from './works/rocnik2'
-import { autori3, diela3 } from './works/rocnik3'
-import { autori4, diela4 } from './works/rocnik4'
+import type { DieloPrehlad } from './prehlad'
+import { prehladDiel } from './prehlad.generated'
+import { autori } from './autori.generated'
 
-/** Všetci autori, deduplikovaní podľa `id` (autor môže mať diela v 2 ročníkoch). */
-export const autori: Autor[] = Object.values(
-  [...autori1, ...autori2, ...autori3, ...autori4].reduce<Record<string, Autor>>((acc, autor) => {
-    if (!acc[autor.id]) acc[autor.id] = autor
-    return acc
-  }, {}),
-).sort((a, b) => a.meno.localeCompare(b.meno, 'sk'))
+export type { DieloPrehlad }
+export { autori }
 
-export const diela: Dielo[] = [...diela1, ...diela2, ...diela3, ...diela4]
+export const diela: DieloPrehlad[] = prehladDiel
 
 const autorMap = new Map(autori.map((a) => [a.id, a]))
-const dieloMap = new Map(diela.map((d) => [d.id, d]))
+const prehladMap = new Map(diela.map((d) => [d.id, d]))
 
 export function najdiAutora(id: string | undefined): Autor | undefined {
   return id ? autorMap.get(id) : undefined
 }
 
-export function najdiDielo(id: string | undefined): Dielo | undefined {
-  return id ? dieloMap.get(id) : undefined
+export function najdiPrehlad(id: string | undefined): DieloPrehlad | undefined {
+  return id ? prehladMap.get(id) : undefined
 }
 
-/** Meno autora pre zobrazenie — z katalógu autorov alebo z `autorText`. */
-export function menoAutora(dielo: Dielo): string {
-  return najdiAutora(dielo.autorId)?.meno ?? dielo.autorText ?? 'neznámy autor'
+/** Meno autora pre zobrazenie — v prehľade je už predpočítané. */
+export const menoAutora = (dielo: DieloPrehlad) => dielo.autor
+
+// --- Lenivé načítanie plných dát ---------------------------------------------
+
+const nacitavace: Record<Rocnik, () => Promise<{ diela: Dielo[] }>> = {
+  1: () => import('./works/rocnik1').then((m) => ({ diela: m.diela1 })),
+  2: () => import('./works/rocnik2').then((m) => ({ diela: m.diela2 })),
+  3: () => import('./works/rocnik3').then((m) => ({ diela: m.diela3 })),
+  4: () => import('./works/rocnik4').then((m) => ({ diela: m.diela4 })),
 }
+
+/** Načítané ročníky si pamätáme, aby sa chunk nesťahoval opakovane. */
+const cache = new Map<Rocnik, Promise<Dielo[]>>()
+
+export function nacitajRocnik(rocnik: Rocnik): Promise<Dielo[]> {
+  const ulozene = cache.get(rocnik)
+  if (ulozene) return ulozene
+
+  const nacitanie = nacitavace[rocnik]().then((m) => m.diela)
+  cache.set(rocnik, nacitanie)
+  return nacitanie
+}
+
+/** Plné dáta jedného diela. Vráti `undefined`, ak dielo neexistuje. */
+export async function nacitajDielo(id: string): Promise<Dielo | undefined> {
+  const prehlad = prehladMap.get(id)
+  if (!prehlad) return undefined
+
+  const vRocniku = await nacitajRocnik(prehlad.rocnik)
+  return vRocniku.find((d) => d.id === id)
+}
+
+/** Plné dáta všetkých ročníkov — používa stránka precvičovania. */
+export async function nacitajVsetkyDiela(rocniky: Rocnik[] = ROCNIKY): Promise<Dielo[]> {
+  const casti = await Promise.all(rocniky.map(nacitajRocnik))
+  return casti.flat()
+}
+
+// --- Konštanty a pomocníci pre prehľad ---------------------------------------
 
 export const ROCNIKY: Rocnik[] = [1, 2, 3, 4]
 
@@ -47,7 +86,7 @@ export const nazovDruhu = (druh: Druh) => DRUHY.find((d) => d.id === druh)!.nazo
 export const nazovLiteratury = (lit: Literatura) => LITERATURY.find((l) => l.id === lit)!.nazov
 
 /** Diela zoradené podľa ročníka, potom druhu, potom názvu. */
-export function zoradeneDiela(zoznam: Dielo[] = diela): Dielo[] {
+export function zoradeneDiela(zoznam: DieloPrehlad[] = diela): DieloPrehlad[] {
   const poradieDruhov: Druh[] = ['poezia', 'proza', 'drama']
   return [...zoznam].sort(
     (a, b) =>
@@ -67,7 +106,8 @@ export function autoriSDielami(): { autor: Autor; pocet: number }[] {
   return autori
     .filter((a) => pocty.has(a.id))
     .map((autor) => ({ autor, pocet: pocty.get(autor.id)! }))
+    .sort((a, b) => a.autor.meno.localeCompare(b.autor.meno, 'sk'))
 }
 
-/** Celkový počet cvičení v aplikácii — pre štatistiku na domovskej stránke. */
-export const pocetUloh = diela.reduce((sum, d) => sum + d.ulohy.length, 0)
+/** Celkový počet cvičení — pre štatistiku na domovskej stránke. */
+export const pocetUloh = diela.reduce((sum, d) => sum + d.pocetUloh, 0)

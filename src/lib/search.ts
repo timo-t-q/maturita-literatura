@@ -1,40 +1,31 @@
-import type { Dielo } from '../types'
-import { diela, menoAutora } from '../data'
+import type { DieloPrehlad } from '../data'
+import { diela } from '../data'
 
 /** Odstráni diakritiku, aby „Marina“ našlo „Marína“. */
 export function normalizuj(text: string): string {
   return text
     .toLowerCase()
     .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[̀-ͯ]/g, '')
 }
 
 interface IndexZaznam {
-  dielo: Dielo
+  dielo: DieloPrehlad
   nazov: string
   autor: string
-  /** ostatné prehľadávané pole spojené do jedného textu */
+  /** ostatné prehľadávané polia spojené do jedného textu */
   telo: string
 }
 
 const index: IndexZaznam[] = diela.map((dielo) => ({
   dielo,
   nazov: normalizuj(dielo.nazov),
-  autor: normalizuj(menoAutora(dielo)),
-  telo: normalizuj(
-    [
-      dielo.zaner,
-      dielo.obdobie,
-      dielo.anotacia,
-      ...dielo.temy,
-      ...dielo.motivy,
-      ...dielo.postavy.map((p) => p.meno),
-    ].join(' '),
-  ),
+  autor: normalizuj(dielo.autor),
+  telo: normalizuj([dielo.zaner, dielo.obdobie, dielo.anotacia, dielo.hladane].join(' ')),
 }))
 
 export interface Vysledok {
-  dielo: Dielo
+  dielo: DieloPrehlad
   /** vyššie skóre = lepšia zhoda */
   skore: number
 }

@@ -1,32 +1,27 @@
 import { describe, expect, test } from 'vitest'
 import { filtruj, jeAktivny, PRAZDNE_FILTRE, prepni } from '../filters'
-import type { Dielo } from '../../types'
+import type { DieloPrehlad } from '../../data/prehlad'
 
-/** Minimálne dielo — testujeme len polia, na ktorých filtre závisia. */
-function dielo(cast: Partial<Dielo>): Dielo {
+/** Minimálny záznam — testujeme len polia, na ktorých filtre závisia. */
+function dielo(cast: Partial<DieloPrehlad>): DieloPrehlad {
   return {
     id: 'test',
     nazov: 'Test',
+    autor: 'Autor',
     rocnik: 1,
     druh: 'proza',
     literatura: 'slovenska',
     standardizovane: false,
     zaner: '',
-    forma: '',
-    rokVydania: '',
     obdobie: '',
     anotacia: '',
-    obsah: [],
-    postavy: [],
-    temy: [],
-    motivy: [],
-    jazyk: [],
-    ulohy: [],
+    pocetUloh: 0,
+    hladane: '',
     ...cast,
   }
 }
 
-const vzorka: Dielo[] = [
+const vzorka: DieloPrehlad[] = [
   dielo({ id: 'a', rocnik: 1, druh: 'poezia', literatura: 'slovenska', standardizovane: true, autorId: 'x' }),
   dielo({ id: 'b', rocnik: 2, druh: 'proza', literatura: 'svetova', standardizovane: false, autorId: 'y' }),
   dielo({ id: 'c', rocnik: 2, druh: 'drama', literatura: 'slovenska', standardizovane: true, autorId: 'x' }),

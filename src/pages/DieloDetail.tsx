@@ -1,7 +1,10 @@
 import { useCallback, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
-import { menoAutora, najdiAutora, najdiDielo, nazovDruhu, nazovLiteratury } from '../data'
+import { najdiAutora, najdiPrehlad, nacitajDielo, nazovDruhu, nazovLiteratury } from '../data'
+import { useAsync } from '../hooks/useAsync'
+import { ChybaNacitania, Nacitavanie } from '../components/Nacitavanie'
 import type { Dielo } from '../types'
+import { bezUvodzoviek } from '../lib/citaty'
 import { Badge } from '../components/Badge'
 import { StavButton } from '../components/StavButton'
 import { Poznamky } from '../components/Poznamky'
@@ -56,9 +59,9 @@ function Znacky({ polozky }: { polozky: string[] }) {
   )
 }
 
-function ZakladneUdaje({ dielo }: { dielo: Dielo }) {
+function ZakladneUdaje({ dielo, autorText }: { dielo: Dielo; autorText: string }) {
   const udaje: { popis: string; hodnota: string }[] = [
-    { popis: 'Autor', hodnota: menoAutora(dielo) },
+    { popis: 'Autor', hodnota: autorText },
     { popis: 'Žáner', hodnota: dielo.zaner },
     { popis: 'Literárna forma', hodnota: dielo.forma },
     { popis: 'Rok vydania', hodnota: dielo.rokVydania },
@@ -144,15 +147,16 @@ function dalsiaZalozka(aktualna: Zalozka, smer: -1 | 1): Zalozka {
 
 export function DieloDetail() {
   const { id } = useParams<{ id: string }>()
-  const dielo = najdiDielo(id)
+  const prehlad = najdiPrehlad(id)
+  const { data: dielo, nacitava, chyba } = useAsync(() => nacitajDielo(id ?? ''), [id])
   const [zalozka, setZalozka] = useState<Zalozka>('dielo')
   const { zapisSkore, skore } = useProgress()
 
   const ulozSkore = useCallback(
     (percent: number) => {
-      if (dielo) zapisSkore(dielo.id, percent)
+      if (prehlad) zapisSkore(prehlad.id, percent)
     },
-    [dielo, zapisSkore],
+    [prehlad, zapisSkore],
   )
 
   const prepniSipkou = (event: React.KeyboardEvent, aktualna: Zalozka) => {
@@ -164,7 +168,7 @@ export function DieloDetail() {
     document.getElementById(`tab-${dalsia}`)?.focus()
   }
 
-  if (!dielo) {
+  if (!prehlad) {
     return (
       <div className="py-16 text-center">
         <h1 className="font-serif text-2xl font-semibold text-stone-900 dark:text-stone-100">
@@ -180,8 +184,8 @@ export function DieloDetail() {
     )
   }
 
-  const autor = najdiAutora(dielo.autorId)
-  const najlepsieSkore = skore[dielo.id]
+  const autor = najdiAutora(prehlad.autorId)
+  const najlepsieSkore = skore[prehlad.id]
 
   return (
     <article className="mx-auto max-w-3xl">
@@ -194,10 +198,10 @@ export function DieloDetail() {
 
       <header className="mt-4">
         <div className="flex flex-wrap items-center gap-1.5">
-          <Badge variant="rocnik">{dielo.rocnik}. ročník</Badge>
-          <Badge variant={dielo.druh}>{nazovDruhu(dielo.druh)}</Badge>
-          <Badge>{nazovLiteratury(dielo.literatura)}</Badge>
-          {dielo.standardizovane && (
+          <Badge variant="rocnik">{prehlad.rocnik}. ročník</Badge>
+          <Badge variant={prehlad.druh}>{nazovDruhu(prehlad.druh)}</Badge>
+          <Badge>{nazovLiteratury(prehlad.literatura)}</Badge>
+          {prehlad.standardizovane && (
             <Badge variant="std" title="Štandardizované literárne dielo podľa ŠVP">
               štandardizované dielo ŠVP
             </Badge>
@@ -205,17 +209,17 @@ export function DieloDetail() {
         </div>
 
         <h1 className="mt-3 font-serif text-3xl/tight font-semibold text-stone-900 sm:text-4xl/tight dark:text-stone-100">
-          {dielo.nazov}
+          {prehlad.nazov}
         </h1>
         <p className="mt-2 text-base text-stone-500 dark:text-stone-400">
-          {menoAutora(dielo)}
+          {prehlad.autor}
           {autor?.roky && (
             <span className="text-stone-400 dark:text-stone-500"> · {autor.roky}</span>
           )}
         </p>
 
         <div className="mt-4 flex flex-wrap items-center gap-3">
-          <StavButton dieloId={dielo.id} velkost="md" />
+          <StavButton dieloId={prehlad.id} velkost="md" />
           {najlepsieSkore !== undefined && (
             <span className="text-sm text-stone-500 dark:text-stone-400">
               Najlepší výsledok kvízu: <strong className="tabular-nums">{najlepsieSkore} %</strong>
@@ -249,7 +253,7 @@ export function DieloDetail() {
             {z.label}
             {z.id === 'ulohy' && (
               <span className="ml-1.5 text-xs text-stone-400 dark:text-stone-500">
-                {dielo.ulohy.length}
+                {prehlad.pocetUloh}
               </span>
             )}
           </button>
@@ -257,10 +261,13 @@ export function DieloDetail() {
       </div>
 
       <div role="tabpanel" id="panel-diela" aria-labelledby={`tab-${zalozka}`} tabIndex={-1} className="mt-7">
-        {zalozka === 'dielo' && (
+        {nacitava && zalozka !== 'poznamky' && <Nacitavanie popis="Načítavam dielo…" />}
+        {chyba && zalozka !== 'poznamky' && <ChybaNacitania />}
+
+        {dielo && zalozka === 'dielo' && (
           <div className="flex flex-col gap-9">
             <Sekcia titulok="Základné údaje">
-              <ZakladneUdaje dielo={dielo} />
+              <ZakladneUdaje dielo={dielo} autorText={prehlad.autor} />
             </Sekcia>
 
             <Sekcia titulok="Dej a obsah">
@@ -308,7 +315,7 @@ export function DieloDetail() {
                       key={index}
                       className="border-l-3 border-amber-400 pl-4 font-serif text-lg/relaxed text-stone-700 italic dark:border-amber-600 dark:text-stone-300"
                     >
-                      „{citat.text}“
+                      „{bezUvodzoviek(citat.text)}“
                       {citat.zdroj && (
                         <footer className="mt-1 font-sans text-xs text-stone-400 not-italic dark:text-stone-500">
                           — {citat.zdroj}
@@ -330,7 +337,7 @@ export function DieloDetail() {
           </div>
         )}
 
-        {zalozka === 'autor' &&
+        {!nacitava && zalozka === 'autor' &&
           (autor ? (
             <div className="flex flex-col gap-8">
               <div>
@@ -356,13 +363,13 @@ export function DieloDetail() {
             </div>
           ) : (
             <p className="prose-text">
-              Toto dielo nemá jedného určeného autora ({dielo.autorText ?? 'neznámy autor'}).
+              Toto dielo nemá jedného určeného autora ({prehlad.autor}).
             </p>
           ))}
 
-        {zalozka === 'ulohy' && <UlohyPanel ulohy={dielo.ulohy} onDokoncene={ulozSkore} />}
+        {dielo && zalozka === 'ulohy' && <UlohyPanel ulohy={dielo.ulohy} onDokoncene={ulozSkore} />}
 
-        {zalozka === 'poznamky' && <Poznamky dieloId={dielo.id} />}
+        {zalozka === 'poznamky' && <Poznamky dieloId={prehlad.id} />}
       </div>
     </article>
   )

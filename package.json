@@ -10,7 +10,8 @@
     "preview": "vite preview",
     "validate": "esbuild scripts/validate-data.ts --bundle --platform=node --format=esm --outfile=node_modules/.tmp-validate.mjs --log-level=error && node node_modules/.tmp-validate.mjs",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "generate:index": "esbuild scripts/generate-index.ts --bundle --platform=node --format=esm --outfile=node_modules/.tmp-gen.mjs --log-level=error && node node_modules/.tmp-gen.mjs"
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.3.3",

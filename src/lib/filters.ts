@@ -1,4 +1,5 @@
-import type { Dielo, Druh, Literatura, Rocnik } from '../types'
+import type { Druh, Literatura, Rocnik } from '../types'
+import type { DieloPrehlad } from '../data/prehlad'
 
 /** Stav filtrov v bočnom paneli. Prázdne polia znamenajú „bez obmedzenia“. */
 export interface Filtre {
@@ -33,7 +34,7 @@ export function prepni<T>(pole: T[], hodnota: T): T[] {
 }
 
 /** Aplikuje filtre na zoznam diel. Polia sa kombinujú logickým AND. */
-export function filtruj(zoznam: Dielo[], filtre: Filtre): Dielo[] {
+export function filtruj(zoznam: DieloPrehlad[], filtre: Filtre): DieloPrehlad[] {
   return zoznam.filter((d) => {
     if (filtre.rocniky.length > 0 && !filtre.rocniky.includes(d.rocnik)) return false
     if (filtre.druhy.length > 0 && !filtre.druhy.includes(d.druh)) return false
