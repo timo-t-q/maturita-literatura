@@ -32,6 +32,9 @@ jobs:
       - name: Kontrola typov
         run: npx tsc -b
 
+      - name: Kontrola integrity dát
+        run: npm run validate
+
       - name: Build
         run: npm run build
 
