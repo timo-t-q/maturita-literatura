@@ -63,7 +63,18 @@ uprav aj túto hodnotu.
 
 Dáta o dielach nie sú v komponentoch, ale v samostatných typovaných súboroch:
 
-\
+```
+src/types.ts                  // schéma — Autor, Dielo, Uloha (kvíz / priraďovanie / doplňovačka)
+src/data/works/rocnik1.ts     // 1. ročník — autori + diela (zdroj pravdy)
+src/data/works/rocnik2.ts     // 2. ročník
+src/data/works/rocnik3.ts     // 3. ročník
+src/data/works/rocnik4.ts     // 4. ročník
+src/data/full.ts              // statické spojenie všetkých ročníkov (len pre skripty)
+src/data/index.ts             // verejné rozhranie — prehľad synchrónne, detail lenivo
+src/data/prehlad.generated.ts // GENEROVANÉ — odľahčený index pre prehľad a vyhľadávanie
+src/data/autori.generated.ts  // GENEROVANÉ — zoznam autorov
+```
+
 Plné dáta o dielach sú objemné, preto sa do úvodného bundle nedostanú. Prehľad,
 vyhľadávanie a bočný panel čítajú generovaný odľahčený index; dej, postavy a cvičenia
 sa dosťahujú až pri otvorení detailu diela (samostatný chunk pre každý ročník).
