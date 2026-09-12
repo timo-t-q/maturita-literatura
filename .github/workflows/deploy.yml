@@ -43,6 +43,9 @@ jobs:
       - name: Kontrola integrity dát
         run: npm run validate
 
+      - name: Lint
+        run: npm run lint
+
       - name: Testy
         run: npm test
 
