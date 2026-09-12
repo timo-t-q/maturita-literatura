@@ -63,14 +63,10 @@ uprav aj túto hodnotu.
 
 Dáta o dielach nie sú v komponentoch, ale v samostatných typovaných súboroch:
 
-```
-src/types.ts              // schéma — Autor, Dielo, Uloha (kvíz / priraďovanie / doplňovačka)
-src/data/index.ts         // spojenie ročníkov, vyhľadávacie pomocníky, zoradenie
-src/data/works/rocnik1.ts // 1. ročník — autori + diela
-src/data/works/rocnik2.ts // 2. ročník
-src/data/works/rocnik3.ts // 3. ročník
-src/data/works/rocnik4.ts // 4. ročník
-```
+\
+Plné dáta o dielach sú objemné, preto sa do úvodného bundle nedostanú. Prehľad,
+vyhľadávanie a bočný panel čítajú generovaný odľahčený index; dej, postavy a cvičenia
+sa dosťahujú až pri otvorení detailu diela (samostatný chunk pre každý ročník).
 
 ### Pridanie nového diela
 
@@ -78,7 +74,9 @@ src/data/works/rocnik4.ts // 4. ročník
 2. Ak autor ešte nie je v poli `autoriN`, pridaj ho (`id`, `meno`, `roky`, `smer`, `zivotopis`).
 3. Do poľa `dielaN` pridaj objekt `Dielo`. Povinné polia vynúti TypeScript — `id` musí byť
    unikátny slug bez diakritiky (použije sa v URL `#/dielo/<id>`).
-4. Do `ulohy` pridaj cvičenia. `id` každej úlohy musí byť unikátne v celej aplikácii —
+4. Spusti `npm run generate:index` — prepíše generované súbory. Bez toho sa dielo
+   v prehľade nezobrazí a CI build zlyhá.
+5. Do `ulohy` pridaj cvičenia. `id` každej úlohy musí byť unikátne v celej aplikácii —
    odporúčaná konvencia je `<slug-diela>-k1`, `-p1`, `-d1`.
 
 ### Typy úloh

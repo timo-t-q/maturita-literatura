@@ -4,7 +4,7 @@
  * duplicitné identifikátory, odkazy na neexistujúcich autorov,
  * kvízy s neplatným indexom správnej odpovede a doplňovačky bez medzier.
  */
-import { autori, diela } from '../src/data/index.ts'
+import { autori, diela } from '../src/data/full'
 
 const chyby: string[] = []
 
