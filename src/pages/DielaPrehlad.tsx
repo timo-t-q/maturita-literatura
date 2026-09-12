@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react'
 import { ROCNIKY, diela, nazovDruhu, zoradeneDiela } from '../data'
 import type { Druh } from '../types'
 import { DieloCard } from '../components/DieloCard'
-import { filtruj, jeAktivny, PRAZDNE_FILTRE, type Filtre } from '../components/Sidebar'
+import { filtruj, jeAktivny, PRAZDNE_FILTRE, type Filtre } from '../lib/filters'
 
 const PORADIE_DRUHOV: Druh[] = ['poezia', 'proza', 'drama']
 

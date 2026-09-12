@@ -48,6 +48,7 @@ Aplikácia beží na `http://localhost:5173`.
 npm run build     # produkčný build do dist/
 npm run preview   # náhľad produkčného buildu
 npx tsc -b        # kontrola typov
+npm run validate  # kontrola integrity dát o dielach
 ```
 
 ## Nasadenie na GitHub Pages
@@ -93,6 +94,10 @@ src/data/works/rocnik4.ts // 4. ročník
 { id: 'mor-ho-d1', typ: 'doplnovacka', zadanie: '…',
   text: ['Báseň napísal ', { medzera: 'Samo Chalupka', napoveda: 'autor' }, ' v roku 1864.'] }
 ```
+
+Po každej úprave dát spusti `npm run validate` — overí duplicitné identifikátory diel
+a úloh, odkazy na neexistujúcich autorov, kvízy s neplatným indexom správnej odpovede
+a doplňovačky bez medzier. Tá istá kontrola beží aj v CI pred nasadením.
 
 Pri doplňovačke nesú medzery okolo seba vlastné odsadenie — text sa vykresľuje presne tak,
 ako je v poli. Odpovede sa porovnávajú bez ohľadu na diakritiku a veľkosť písmen.

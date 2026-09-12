@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react'
 import { Link, Outlet, useLocation } from 'react-router-dom'
 import { SearchBox } from './SearchBox'
 import { ThemeToggle } from './ThemeToggle'
-import { Sidebar, type Filtre } from './Sidebar'
+import { Sidebar } from './Sidebar'
+import type { Filtre } from '../lib/filters'
 
 export function Layout({
   filtre,

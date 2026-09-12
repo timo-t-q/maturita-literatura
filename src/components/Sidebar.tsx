@@ -1,39 +1,9 @@
 import { NavLink } from 'react-router-dom'
 import { DRUHY, LITERATURY, ROCNIKY, autoriSDielami, diela } from '../data'
 import type { Druh, Literatura, Rocnik } from '../types'
+import { jeAktivny, prepni, PRAZDNE_FILTRE, type Filtre } from '../lib/filters'
 import { useProgress } from '../lib/progress'
 import { ProgressBar } from './ProgressBar'
-
-export interface Filtre {
-  rocniky: Rocnik[]
-  druhy: Druh[]
-  literatury: Literatura[]
-  autorId: string | null
-  ibaStandardizovane: boolean
-}
-
-export const PRAZDNE_FILTRE: Filtre = {
-  rocniky: [],
-  druhy: [],
-  literatury: [],
-  autorId: null,
-  ibaStandardizovane: false,
-}
-
-export function jeAktivny(filtre: Filtre): boolean {
-  return (
-    filtre.rocniky.length > 0 ||
-    filtre.druhy.length > 0 ||
-    filtre.literatury.length > 0 ||
-    filtre.autorId !== null ||
-    filtre.ibaStandardizovane
-  )
-}
-
-/** Pridá alebo odoberie hodnotu z polia filtra (immutable). */
-function prepni<T>(pole: T[], hodnota: T): T[] {
-  return pole.includes(hodnota) ? pole.filter((x) => x !== hodnota) : [...pole, hodnota]
-}
 
 function Sekcia({ titulok, children }: { titulok: string; children: React.ReactNode }) {
   return (
@@ -196,14 +166,3 @@ export function Sidebar({
   )
 }
 
-/** Aplikuje filtre na zoznam diel. */
-export function filtruj(zoznam: typeof diela, filtre: Filtre) {
-  return zoznam.filter((d) => {
-    if (filtre.rocniky.length > 0 && !filtre.rocniky.includes(d.rocnik)) return false
-    if (filtre.druhy.length > 0 && !filtre.druhy.includes(d.druh)) return false
-    if (filtre.literatury.length > 0 && !filtre.literatury.includes(d.literatura)) return false
-    if (filtre.autorId && d.autorId !== filtre.autorId) return false
-    if (filtre.ibaStandardizovane && !d.standardizovane) return false
-    return true
-  })
-}

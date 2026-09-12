@@ -136,6 +136,12 @@ function Obsah({ dielo }: { dielo: Dielo }) {
   )
 }
 
+/** Šípky vľavo/vpravo prepínajú záložky — očakávané správanie roly "tablist". */
+function dalsiaZalozka(aktualna: Zalozka, smer: -1 | 1): Zalozka {
+  const index = ZALOZKY.findIndex((z) => z.id === aktualna)
+  return ZALOZKY[(index + smer + ZALOZKY.length) % ZALOZKY.length].id
+}
+
 export function DieloDetail() {
   const { id } = useParams<{ id: string }>()
   const dielo = najdiDielo(id)
@@ -148,6 +154,15 @@ export function DieloDetail() {
     },
     [dielo, zapisSkore],
   )
+
+  const prepniSipkou = (event: React.KeyboardEvent, aktualna: Zalozka) => {
+    const smer = event.key === 'ArrowRight' ? 1 : event.key === 'ArrowLeft' ? -1 : 0
+    if (smer === 0) return
+    event.preventDefault()
+    const dalsia = dalsiaZalozka(aktualna, smer)
+    setZalozka(dalsia)
+    document.getElementById(`tab-${dalsia}`)?.focus()
+  }
 
   if (!dielo) {
     return (
@@ -219,8 +234,12 @@ export function DieloDetail() {
             key={z.id}
             role="tab"
             type="button"
+            id={`tab-${z.id}`}
+            aria-controls="panel-diela"
             aria-selected={zalozka === z.id}
+            tabIndex={zalozka === z.id ? 0 : -1}
             onClick={() => setZalozka(z.id)}
+            onKeyDown={(event) => prepniSipkou(event, z.id)}
             className={`-mb-px shrink-0 border-b-2 px-4 py-2.5 text-sm font-medium transition-colors ${
               zalozka === z.id
                 ? 'border-amber-500 text-amber-700 dark:text-amber-400'
@@ -237,7 +256,7 @@ export function DieloDetail() {
         ))}
       </div>
 
-      <div role="tabpanel" className="mt-7">
+      <div role="tabpanel" id="panel-diela" aria-labelledby={`tab-${zalozka}`} tabIndex={-1} className="mt-7">
         {zalozka === 'dielo' && (
           <div className="flex flex-col gap-9">
             <Sekcia titulok="Základné údaje">

@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { HashRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { Layout } from './components/Layout'
-import { PRAZDNE_FILTRE, type Filtre } from './components/Sidebar'
+import { PRAZDNE_FILTRE, type Filtre } from './lib/filters'
 import { Domov } from './pages/Domov'
 import { DielaPrehlad } from './pages/DielaPrehlad'
 import { DieloDetail } from './pages/DieloDetail'
